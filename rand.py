@@ -210,7 +210,8 @@ def allInputs():
             train1.append(quesIn[i])
             train2.append(userIn[i])
             trainO.append(output[i])
-    return(test1, test2, testO, train1, train2, trainO, valid1, valid2, validO)
+    return (quesIn, userIn, output)
+    #return(test1, test2, testO, train1, train2, trainO, valid1, valid2, validO)
 
 
 
