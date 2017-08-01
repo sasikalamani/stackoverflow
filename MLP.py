@@ -16,8 +16,24 @@ import sys
 import timeit
 from logistic_sgd import LogisticRegression
 import rand
+import upVoteMLP
 
-(quesIn, userIn, output) = rand.allInputs()
+#(quesIn, userIn, output) = rand.allInputs()
+(inputs, score) = upVoteMLP.inout()
+test = list()
+testO = list()
+train = list()
+trainO = list()
+
+random.seed(2)
+ranNum = random.sample(range(12723), 2500)
+for i in range(12723):
+    if (i in ranNum): 
+        test.append(inputs[i])
+        testO.append(score[i])
+    else:
+        train.append(inputs[i])
+        trainO.append(score[i])
 
 
 # start-snippet-1
@@ -173,7 +189,7 @@ class MLP(object):
         self.errors = self.logRegressionLayer.errors
 
 
-        #self.y_given_x = self.logRegressionLayer.y_given_x
+        self.y_given_x = self.logRegressionLayer.y_given_x
 
         # the parameters of the model are the parameters of the two layer it is
         # made out of
@@ -184,8 +200,8 @@ class MLP(object):
         self.input = input
 
 
-def test_mlp(learning_rate=0.01, L1_reg=0.00, L2_reg=0.0001, n_epochs=1000,
-             dataset='mnist.pkl.gz', batch_size=1, n_hidden=100):
+def test_mlp(learning_rate=0.01, L1_reg=0.00, L2_reg=0.0001, n_epochs=100,
+             dataset='mnist.pkl.gz', batch_size=120, n_hidden=10):
     """
     Demonstrate stochastic gradient descent optimization for a multilayer
     perceptron
@@ -215,12 +231,12 @@ def test_mlp(learning_rate=0.01, L1_reg=0.00, L2_reg=0.0001, n_epochs=1000,
    """
 
     #print(trainO)
-    Xo = theano.shared(value=np.asarray(quesIn, dtype='float64'), name='Xo')
-    yo = theano.shared(value=np.asarray(output, dtype = 'int32'), name='yo')
-    Xot = theano.shared(value=np.asarray(quesIn, dtype='float64'), name='Xot')
-    yot = theano.shared(value=np.asarray(output, dtype = 'int32'), name='yot')
-    Xov = theano.shared(value=np.asarray(quesIn, dtype='float64'), name='Xot')
-    yov = theano.shared(value=np.asarray(output, dtype = 'int32'), name='yot')
+    Xo = theano.shared(value=np.asarray(train, dtype='float64'), name='Xo')
+    yo = theano.shared(value=np.asarray(trainO, dtype = 'int32'), name='yo')
+    Xot = theano.shared(value=np.asarray(test, dtype='float64'), name='Xot')
+    yot = theano.shared(value=np.asarray(testO, dtype = 'int32'), name='yot')
+    Xov = theano.shared(value=np.asarray(train, dtype='float64'), name='Xot')
+    yov = theano.shared(value=np.asarray(trainO, dtype = 'int32'), name='yot')
 
     #print(y)
 #    sys.exit()
@@ -250,9 +266,9 @@ def test_mlp(learning_rate=0.01, L1_reg=0.00, L2_reg=0.0001, n_epochs=1000,
     classifier = MLP(
         rng=rng,
         input=x,
-        n_in=8064,
+        n_in=7527,
         n_hidden=n_hidden,
-        n_out=611
+        n_out=102
     )
 
     # start-snippet-4
@@ -315,14 +331,14 @@ def test_mlp(learning_rate=0.01, L1_reg=0.00, L2_reg=0.0001, n_epochs=1000,
             y: train_set_y[index * batch_size: (index + 1) * batch_size]
         }
     )
-    # rank_model = theano.function(
-    #     inputs = [index],
-    #     outputs=classifier.y_given_x(x),
-    #     givens={
-    #         x: train_set_x[(index-index):]
-    #         #y: train_set_y[(index-index):]
-    #     }
-    # )
+    rank_model = theano.function(
+        inputs = [index],
+        outputs=classifier.y_given_x(x),
+        givens={
+            x: train_set_x[(index-index):]
+            #y: train_set_y[(index-index):]
+        }
+    )
     # end-snippet-5
 
  ###############
@@ -354,7 +370,6 @@ def test_mlp(learning_rate=0.01, L1_reg=0.00, L2_reg=0.0001, n_epochs=1000,
         for minibatch_index in range(n_train_batches):
 
             minibatch_avg_cost = train_model(minibatch_index)
-            
             # iteration number
             iter = (epoch - 1) * n_train_batches + minibatch_index
 
@@ -392,6 +407,7 @@ def test_mlp(learning_rate=0.01, L1_reg=0.00, L2_reg=0.0001, n_epochs=1000,
                     test_losses = [test_model(i) for i
                                    in range(n_test_batches)]
                     test_score = np.mean(test_losses)
+                    ranks = [rank_model(n_test_batches)]
 
                     print(('     epoch %i, minibatch %i/%i, test error of '
                            'best model %f %%') %
@@ -400,6 +416,7 @@ def test_mlp(learning_rate=0.01, L1_reg=0.00, L2_reg=0.0001, n_epochs=1000,
     #        if patience <= iter:
     #            done_looping = True
     #            break
+    #print(ranks)
     end_time = timeit.default_timer()
     print(('Optimization complete. Best validation score of %f %% '
            'obtained at iteration %i, with test performance %f %%') %
@@ -408,7 +425,7 @@ def test_mlp(learning_rate=0.01, L1_reg=0.00, L2_reg=0.0001, n_epochs=1000,
            os.path.split(__file__)[1] +
            ' ran for %.2fm' % ((end_time - start_time) / 60.)), file=sys.stderr)
     print("\n")
-
+    return(ranks, trainO)
 
 
 
