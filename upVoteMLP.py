@@ -4,22 +4,30 @@ from collections import Counter
 import nltk
 #from keras.preprocessing.text import Tokenizer
 
-(scores, questions, answerers, allAnswerers) = stats.data()
+(trainScores, trainQuestions, trainAll, 
+        testScores, testQuestions, testAll, answerers, questions) = stats.data()
 
 #print(len(scores))
+#makes the output scores into a classfication problem. Negatives scores 
+#are made 0, and above 500 is made 101. All others are split in 5
+#range sections.
+def scorize(scores):
+    for i in range (len(scores)):
+        if(scores[i]<0):
+            scores[i] = 0
+        elif (scores[i]>500):
+            scores[i] = 101
+        else:
+            while(scores[i] % 5 != 0):
+                scores[i] += 1
+            num = scores[i] // 5
+            scores[i] = num
+    return scores
 
-for i in range (len(scores)):
-    if(scores[i]<0):
-        scores[i] = 0
-    elif (scores[i]>500):
-        scores[i] = 101
-    else:
-        while(scores[i] % 5 != 0):
-            scores[i] += 1
-        num = scores[i] // 5
-        scores[i] = num
+trainScores = scorize(trainScores)
+testScores = scorize(testScores)
 
-
+#maps an index for each user in the list
 def mapUser(someList):
     userDict = Counter()
     usrs = 0
@@ -45,6 +53,14 @@ with open('Questions.csv', 'rb') as csvfile:
 for i in range(len(questions)):
     ques = questions[i]
     questions[i] = titleDict[ques]
+for i in range(len(trainQuestions)):
+    ques = trainQuestions[i]
+    trainQuestions[i] = titleDict[ques]
+newTQ  = [0] * len(testQuestions)
+for i in range(len(testQuestions)):
+    ques = testQuestions[i]
+    newTQ[i] = titleDict[ques]
+
 
 cnt = Counter()
 for title in questions:
@@ -60,26 +76,31 @@ for k in cnt.keys():
     i+=1
 
 
-inputs = [ ([0] * 7527) for row in range(len(questions)) ]
-
-lineNum = 0
-for sent in questions:
-    lineNum +=1 
-    token = nltk.word_tokenize(sent.decode("utf8", 'ignore'))
-    for word in token:
-            lookup = index[word.lower()]
-            inputs[lineNum-1][lookup]= 1
+train = [ ([0] * 7527) for row in range(len(trainQuestions)) ]
+test = [ ([0] * 7527) for row in range(len(newTQ)) ]
 
 
+#creates the one hot encoding of the title as well as the answerer
+def inputize(questions, allAnswerers, inputs):
+    lineNum = 0
+    for sent in questions:
+        lineNum +=1 
+        token = nltk.word_tokenize(sent.decode("utf8", 'ignore'))
+        for word in token:
+                lookup = index[word.lower()]
+                inputs[lineNum-1][lookup]= 1
 
+    for i in range(len(allAnswerers)):
+        ID = userDict[allAnswerers[i]]
+        newNum = ID+2765
+        inputs[i][newNum] = 1
+    return inputs
 
-for i in range(len(allAnswerers)):
-    ID = userDict[allAnswerers[i]]
-    newNum = ID+2765
-    inputs[i][newNum] = 1
+train = inputize(trainQuestions, trainAll, train)
+test = inputize(newTQ, testAll, test)
 
 def inout():
-    return(inputs, scores)
+    return(train, test, trainScores, testScores)
 
 
 

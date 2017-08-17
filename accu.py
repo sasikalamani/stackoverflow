@@ -2,12 +2,14 @@ import MLP
 import numpy
 
 
+
 (ranks, output) = MLP.test_mlp()
-ranks = ranks[0]
+#ranks = ranks[0]
 #print(len(ranks))
 #print(len(ranks[0]))
 
 
+#calculating the MRR accuracy
 accu = 0
 for i in range(len(output)):
     num = output[i]

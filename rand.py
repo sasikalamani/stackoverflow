@@ -112,7 +112,6 @@ for question in ques:
     answers = answers + quesAns[question]
 
 
-
 #new maps the answer to the user
 new = dict()
 with open('Answers.csv', 'rb') as csvfile1:
@@ -128,7 +127,7 @@ for answer in answers:
     au = new[answer]
     if(au not in answerers):
         answerers.append(au)
-
+print(len(answerers))
 
 #maps the answerers to an index
 ansIndex = dict()
@@ -180,8 +179,7 @@ for sent in bodyIn:
 
 
 
-
-
+#separates the dataset into train, validate, and test
 def allInputs():
     test1 = list()
     test2 = list()

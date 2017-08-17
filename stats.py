@@ -1,17 +1,47 @@
 import rand
 import csv
+import random
 import matplotlib.pyplot as plt
 
 from collections import Counter
 
 (quesAns, ansQues) = rand.qa()
 #print(len(quesAns))  144306
+
+#questions with more than 5 answers
 count = 0
-answer = []
+#answer = []
+keys = []
 for key in quesAns:
     if (len(quesAns[key]) >= 5):
         count += 1
-        answer = answer + quesAns[key]
+        #answer = answer + quesAns[key]
+        keys = keys + [key]
+
+
+test = list()
+train = list()
+testDict = dict()
+random.seed(2)
+ranNum = random.sample(range(2126), 425)
+for i in range(2126):
+    if (i in ranNum): 
+        test.append(keys[i])
+    else:
+        train.append(keys[i])
+
+
+
+trainAns = []
+for key in train:
+    trainAns = trainAns + quesAns[key]
+
+
+testAns = []
+for key in test:
+    testAns = testAns + quesAns[key]
+    testDict[key] = quesAns[key]
+
 
 #print(count)  #2126
 #print(len(answer)) #12723
@@ -31,38 +61,66 @@ with open('Answers.csv', 'rb') as csvfile1:
 answerers = []
 scores = []
 questions = []
-al = []
-for ans in answer:
+trainScores = []
+trainQuestions = []
+trainAll = []
+for ans in trainAns:
+    trainQuestions.append(ansQues[ans])
     questions.append(ansQues[ans])
     au = new[ans]
     sc = int(score[ans])
     if(au not in answerers):
         answerers.append(au)
-    al.append(au)
+    trainAll.append(au)
     scores.append(sc)
+    trainScores.append(sc)
 
+testScores = []
+testQuestions = []
+testAll = []
+for ans in testAns:
+    testQuestions.append(ansQues[ans])
+    questions.append(ansQues[ans])
+    au = new[ans]
+    sc = int(score[ans])
+    if(au not in answerers):
+        answerers.append(au)
+    testAll.append(au)
+    scores.append(sc)
+    testScores.append(sc)
 
+def ques():
+    return testQuestions
 def data():
-    return (scores, questions, answerers, al)
+    return (trainScores, trainQuestions, trainAll, 
+            testScores, testQuestions, testAll, answerers, questions)
 
-cnt = Counter()
-for i in range(len(scores)):
-   scr = scores[i]
-   cnt[scr] += 1
+for key in testDict:
+    for i in range(len(testDict[key])):
+        testDict[key][i] = int(score[testDict[key][i]])
 
-#print(len(cnt))
+def dict():
+    return testDict
 
-x = []
-y = []
-for key in cnt:
-    x.append(key)
-    y.append(cnt[key])
+# cnt = Counter()
+# for i in range(len(scores)):
+#    scr = scores[i]
+#    cnt[scr] += 1
 
-#print(x, y)
+# #print(len(cnt))
 
-#plt.scatter(x, y)
-#plt.ylabel('frequency')
-#plt.show()
+# x = []
+# y = []
+# for key in cnt:
+#     x.append(key)
+#     y.append(cnt[key])
+
+# print(x, y)
+
+# plt.scatter(x, y)
+# plt.ylabel('frequency')
+# plt.xlabel('score')
+# plt.show()
 
 #print(len(questions))
 

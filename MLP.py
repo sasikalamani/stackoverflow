@@ -19,22 +19,7 @@ import rand
 import upVoteMLP
 
 #(quesIn, userIn, output) = rand.allInputs()
-(inputs, score) = upVoteMLP.inout()
-test = list()
-testO = list()
-train = list()
-trainO = list()
-
-random.seed(2)
-ranNum = random.sample(range(12723), 2500)
-for i in range(12723):
-    if (i in ranNum): 
-        test.append(inputs[i])
-        testO.append(score[i])
-    else:
-        train.append(inputs[i])
-        trainO.append(score[i])
-
+(train, test, trainO, testO) = upVoteMLP.inout()
 
 # start-snippet-1
 class HiddenLayer(object):
@@ -156,11 +141,18 @@ class MLP(object):
             n_out=n_hidden,
             activation=T.tanh
         )
+        self.hiddenLayer2 = HiddenLayer(
+            rng=rng,
+            input=self.hiddenLayer.output,
+            n_in=n_hidden,
+            n_out=n_hidden,
+            activation=T.tanh
+        )
 
         # The logistic regression layer gets as input the hidden units
         # of the hidden layer
         self.logRegressionLayer = LogisticRegression(
-            input=self.hiddenLayer.output,
+            input=self.hiddenLayer2.output,
             n_in= n_hidden,
             n_out=n_out
         )
@@ -169,6 +161,7 @@ class MLP(object):
         # be small
         self.L1 = (
             abs(self.hiddenLayer.W).sum()
+            + abs(self.hiddenLayer2.W).sum()
             + abs(self.logRegressionLayer.W).sum()
         )
 
@@ -176,6 +169,7 @@ class MLP(object):
         # square of L2 norm to be small
         self.L2_sqr = (
             (self.hiddenLayer.W ** 2).sum()
+            + (self.hiddenLayer2.W ** 2).sum()
             + (self.logRegressionLayer.W ** 2).sum()
         )
 
@@ -193,15 +187,15 @@ class MLP(object):
 
         # the parameters of the model are the parameters of the two layer it is
         # made out of
-        self.params = self.hiddenLayer.params + self.logRegressionLayer.params
+        self.params = self.hiddenLayer.params + self.logRegressionLayer.params + self.hiddenLayer2.params
         # end-snippet-3
 
         # keep track of model input
         self.input = input
 
 
-def test_mlp(learning_rate=0.01, L1_reg=0.00, L2_reg=0.0001, n_epochs=100,
-             dataset='mnist.pkl.gz', batch_size=120, n_hidden=10):
+def test_mlp(learning_rate=0.01, L1_reg=0.00, L2_reg=0.0001, n_epochs=1000,
+             dataset='mnist.pkl.gz', batch_size=128, n_hidden=64):
     """
     Demonstrate stochastic gradient descent optimization for a multilayer
     perceptron
@@ -335,7 +329,7 @@ def test_mlp(learning_rate=0.01, L1_reg=0.00, L2_reg=0.0001, n_epochs=100,
         inputs = [index],
         outputs=classifier.y_given_x(x),
         givens={
-            x: train_set_x[(index-index):]
+            x: test_set_x[(index-index):]
             #y: train_set_y[(index-index):]
         }
     )
@@ -425,7 +419,7 @@ def test_mlp(learning_rate=0.01, L1_reg=0.00, L2_reg=0.0001, n_epochs=100,
            os.path.split(__file__)[1] +
            ' ran for %.2fm' % ((end_time - start_time) / 60.)), file=sys.stderr)
     print("\n")
-    return(ranks, trainO)
+    return(ranks, testO)
 
 
 
